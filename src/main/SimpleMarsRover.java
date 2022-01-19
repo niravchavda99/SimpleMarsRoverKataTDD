@@ -1,49 +1,76 @@
 package main;
 
 public class SimpleMarsRover implements Rover {
-    private static final int PLATEAU_GRID_X = 10;
-    private static final int PLATEAU_GRID_Y = 10;
-
-    private final Position currentPosition;
-    private final Direction currentDirection;
+    private final Grid plateauGrid;
+    private Position currentPosition;
+    private Direction currentDirection;
 
     public SimpleMarsRover() {
+        initializePositionAndDirection();
+        this.plateauGrid = new Grid(10, 10, null);
+    }
+
+    public SimpleMarsRover(Grid plateauGrid) {
+        initializePositionAndDirection();
+        this.plateauGrid = plateauGrid;
+    }
+
+    private void initializePositionAndDirection() {
         this.currentPosition = new Position(0, 0);
         this.currentDirection = new Direction();
     }
 
     @Override
     public String execute(String command) throws InvalidCommandException {
-        for (int characterPointer = 0; characterPointer < command.length(); characterPointer++) {
+        boolean foundObstacle = false;
+        for (int characterPointer = 0; characterPointer < command.length() && !foundObstacle; characterPointer++) {
             char currentCommand = command.charAt(characterPointer);
 
-            if (currentCommand == 'M') moveRover();
+            if (currentCommand == 'M') foundObstacle = moveRoverAndGetObstacleStatus();
             else if (currentCommand == 'L') this.currentDirection.rotateLeft();
             else if (currentCommand == 'R') this.currentDirection.rotateRight();
             else throw new InvalidCommandException(String.format("Invalid Command: '%c'", currentCommand));
         }
 
-        return String.format("%s:%s", this.currentPosition, this.currentDirection);
+        return String.format("%s%s:%s", foundObstacle ? "O:" : "", this.currentPosition, this.currentDirection);
     }
 
-    private void moveRover() {
+    private boolean hasObstacle(Position givenPosition) {
+        return this.plateauGrid.obstacles.contains(givenPosition);
+    }
+
+    private boolean moveRoverAndGetObstacleStatus() {
+        Position nextPosition = calculateNextPosition();
+
+        if (hasObstacle(nextPosition)) return true;
+
+        this.currentPosition = nextPosition;
+        return false;
+    }
+
+    private Position calculateNextPosition() {
+        Position nextPosition = this.currentPosition.clone();
+
         switch (this.currentDirection.currentFacingDirection) {
             case NORTH -> {
-                this.currentPosition.yCoordinate++;
-                this.currentPosition.yCoordinate %= PLATEAU_GRID_Y;
+                nextPosition.yCoordinate++;
+                nextPosition.yCoordinate %= this.plateauGrid.columns;
             }
             case EAST -> {
-                this.currentPosition.xCoordinate++;
-                this.currentPosition.xCoordinate %= PLATEAU_GRID_X;
+                nextPosition.xCoordinate++;
+                nextPosition.xCoordinate %= this.plateauGrid.rows;
             }
             case SOUTH -> {
-                this.currentPosition.yCoordinate--;
-                if (this.currentPosition.yCoordinate < 0) this.currentPosition.yCoordinate = PLATEAU_GRID_Y - 1;
+                nextPosition.yCoordinate--;
+                if (nextPosition.yCoordinate < 0)
+                    nextPosition.yCoordinate = this.plateauGrid.columns - 1;
             }
             case WEST -> {
-                this.currentPosition.xCoordinate--;
-                if (this.currentPosition.xCoordinate < 0) this.currentPosition.xCoordinate = PLATEAU_GRID_X - 1;
+                nextPosition.xCoordinate--;
+                if (nextPosition.xCoordinate < 0) nextPosition.xCoordinate = this.plateauGrid.rows - 1;
             }
         }
+
+        return nextPosition;
     }
 }

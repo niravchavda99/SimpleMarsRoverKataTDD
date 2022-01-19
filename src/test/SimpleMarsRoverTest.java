@@ -3,6 +3,8 @@ package test;
 import main.*;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -232,5 +234,11 @@ public class SimpleMarsRoverTest {
     @Test
     public void wrongCommandDoesntExecute() {
         assertThrows(InvalidCommandException.class, () -> new SimpleMarsRover().execute("MMMDM"));
+    }
+
+    @Test
+    public void oneObstacleGiven() throws InvalidCommandException {
+        Rover rover = new SimpleMarsRover(new Grid(10, 10, List.of(new Position(0, 3))));
+        assertEquals("O:0:2:N", rover.execute("MMMM"));
     }
 }
